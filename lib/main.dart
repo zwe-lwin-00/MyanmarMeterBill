@@ -4,7 +4,7 @@ import 'config/app_config.dart';
 import 'config/app_config_loader.dart';
 import 'config/app_config_scope.dart';
 import 'theme/user_theme_mode_storage.dart';
-import 'ui/bill_calculator_page.dart';
+import 'ui/main_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -104,7 +104,7 @@ class _MyanmarMeterBillAppState extends State<MyanmarMeterBillApp> {
           ),
           useMaterial3: app.useMaterial3,
         ),
-        home: BillCalculatorPage(
+        home: MainShell(
           themeMode: _themeMode,
           onThemeModeChanged: _onUserThemeModeChanged,
         ),

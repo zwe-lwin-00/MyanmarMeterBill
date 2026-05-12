@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../models/extra_content.dart';
 import '../models/tariff_tier.dart';
 import 'required_config_keys.dart';
 import 'string_template.dart';
@@ -236,6 +237,8 @@ class AppConfig {
     required this.layout,
     required this.formatting,
     required this.strings,
+    required this.deviceGuide,
+    required this.aboutDeveloper,
     required this.meterOptions,
     required this.tariffSchedules,
   });
@@ -245,6 +248,8 @@ class AppConfig {
   final LayoutSection layout;
   final FormattingSection formatting;
   final Map<String, String> strings;
+  final DeviceGuideContent deviceGuide;
+  final AboutDeveloperContent aboutDeveloper;
   final List<MeterOption> meterOptions;
   final Map<String, List<TariffTier>> tariffSchedules;
 
@@ -312,6 +317,8 @@ class AppConfig {
         'layout': layout.toJson(),
         'formatting': formatting.toJson(),
         'strings': strings,
+        'deviceGuide': deviceGuide.toJson(),
+        'aboutDeveloper': aboutDeveloper.toJson(),
         'meterOptions': meterOptions.map((e) => e.toJson()).toList(),
         'tariffSchedules': tariffSchedules.map(
           (k, v) => MapEntry(
@@ -427,12 +434,21 @@ class AppConfig {
     _validateFormattingTemplates(formatting);
     _validateUiStrings(strings);
 
+    final deviceGuide = DeviceGuideContent.fromJson(json['deviceGuide']);
+    _validateDeviceGuide(deviceGuide);
+
+    final aboutDeveloper =
+        AboutDeveloperContent.fromJson(json['aboutDeveloper']);
+    _validateAboutDeveloper(aboutDeveloper);
+
     return AppConfig(
       schemaVersion: version,
       app: app,
       layout: layout,
       formatting: formatting,
       strings: strings,
+      deviceGuide: deviceGuide,
+      aboutDeveloper: aboutDeveloper,
       meterOptions: meters,
       tariffSchedules: schedules,
     );
@@ -463,6 +479,40 @@ void _validateUiStrings(Map<String, String> strings) {
         '(see lib/config/required_config_keys.dart)',
       );
     }
+  }
+}
+
+void _validateDeviceGuide(DeviceGuideContent g) {
+  if (g.pageTitle.isEmpty) {
+    throw const FormatException('deviceGuide.pageTitle must not be empty');
+  }
+  if (g.intro.isEmpty) {
+    throw const FormatException('deviceGuide.intro must not be empty');
+  }
+  if (g.items.isEmpty) {
+    throw const FormatException('deviceGuide.items must not be empty');
+  }
+  for (var i = 0; i < g.items.length; i++) {
+    if (g.items[i].title.trim().isEmpty) {
+      throw FormatException('deviceGuide.items[$i].title must not be empty');
+    }
+  }
+}
+
+void _validateAboutDeveloper(AboutDeveloperContent a) {
+  if (a.pageTitle.isEmpty) {
+    throw const FormatException('aboutDeveloper.pageTitle must not be empty');
+  }
+  if (a.developerName.isEmpty) {
+    throw const FormatException(
+      'aboutDeveloper.developerName must not be empty',
+    );
+  }
+  final hasParagraph = a.paragraphs.any((p) => p.trim().isNotEmpty);
+  if (!hasParagraph) {
+    throw const FormatException(
+      'aboutDeveloper.paragraphs must contain at least one non-empty entry',
+    );
   }
 }
 

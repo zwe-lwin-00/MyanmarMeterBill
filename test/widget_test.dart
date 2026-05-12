@@ -56,6 +56,9 @@ const String _minimalTestConfigJson = r'''
     "totalAmountTemplate": "{{currencyPrefix}}{{amount}}"
   },
   "strings": {
+    "nav_tab_calculate": "Calculate",
+    "nav_tab_devices": "Devices",
+    "nav_tab_about": "About",
     "page_intro": "Pick meter and enter kWh.",
     "meter_section_label": "Meter type",
     "input_error": "Enter valid units.",
@@ -76,6 +79,18 @@ const String _minimalTestConfigJson = r'''
     "theme_option_system": "System default",
     "theme_option_light": "Light",
     "theme_option_dark": "Dark"
+  },
+  "deviceGuide": {
+    "pageTitle": "Device guide",
+    "intro": "Approximate wattage for common devices.",
+    "items": [
+      { "title": "Test device", "typicalWatts": 100, "notes": "Note." }
+    ]
+  },
+  "aboutDeveloper": {
+    "pageTitle": "About",
+    "developerName": "Tester",
+    "paragraphs": ["Test paragraph."]
   },
   "meterOptions": [
     {

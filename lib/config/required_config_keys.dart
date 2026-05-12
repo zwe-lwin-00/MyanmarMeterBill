@@ -1,6 +1,9 @@
 /// Authoritative list of [strings] keys the UI requires at runtime.
-/// Keep in sync with [BillCalculatorPage] and README "Configuration contract".
+/// Keep in sync with [MainShell] / [BillCalculatorTab] and README "Configuration contract".
 const Set<String> kRequiredUiStringKeys = {
+  'nav_tab_calculate',
+  'nav_tab_devices',
+  'nav_tab_about',
   'page_intro',
   'meter_section_label',
   'input_error',

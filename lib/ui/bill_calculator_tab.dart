@@ -9,21 +9,19 @@ import '../calculator/electric_bill_calculator.dart';
 import '../config/app_config.dart';
 import '../config/app_config_scope.dart';
 
-class BillCalculatorPage extends StatefulWidget {
-  const BillCalculatorPage({
+class BillCalculatorTab extends StatefulWidget {
+  const BillCalculatorTab({
     super.key,
-    required this.themeMode,
-    required this.onThemeModeChanged,
+    required this.layoutPadding,
   });
 
-  final ThemeMode themeMode;
-  final ValueChanged<ThemeMode> onThemeModeChanged;
+  final double layoutPadding;
 
   @override
-  State<BillCalculatorPage> createState() => _BillCalculatorPageState();
+  State<BillCalculatorTab> createState() => _BillCalculatorTabState();
 }
 
-class _BillCalculatorPageState extends State<BillCalculatorPage> {
+class _BillCalculatorTabState extends State<BillCalculatorTab> {
   final _unitsController = TextEditingController();
   final _unitsFocus = FocusNode();
   final _scrollController = ScrollController();
@@ -69,110 +67,6 @@ class _BillCalculatorPageState extends State<BillCalculatorPage> {
       _result = null;
       _inputError = null;
     });
-  }
-
-  void _showThemeModeSheet(BuildContext context) {
-    final config = AppConfigScope.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                child: Text(
-                  config.optionalString(
-                    'theme_picker_title',
-                    'Appearance',
-                  ),
-                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-              RadioListTile<ThemeMode>(
-                value: ThemeMode.system,
-                groupValue: widget.themeMode,
-                title: Row(
-                  children: [
-                    Icon(Icons.brightness_auto_outlined, color: scheme.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        config.optionalString(
-                          'theme_option_system',
-                          'System default',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                onChanged: (v) {
-                  if (v != null) {
-                    widget.onThemeModeChanged(v);
-                    Navigator.pop(ctx);
-                  }
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                value: ThemeMode.light,
-                groupValue: widget.themeMode,
-                title: Row(
-                  children: [
-                    Icon(Icons.light_mode_outlined, color: scheme.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        config.optionalString(
-                          'theme_option_light',
-                          'Light',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                onChanged: (v) {
-                  if (v != null) {
-                    widget.onThemeModeChanged(v);
-                    Navigator.pop(ctx);
-                  }
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                value: ThemeMode.dark,
-                groupValue: widget.themeMode,
-                title: Row(
-                  children: [
-                    Icon(Icons.dark_mode_outlined, color: scheme.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        config.optionalString(
-                          'theme_option_dark',
-                          'Dark',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                onChanged: (v) {
-                  if (v != null) {
-                    widget.onThemeModeChanged(v);
-                    Navigator.pop(ctx);
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   void _calculate() {
@@ -233,37 +127,15 @@ class _BillCalculatorPageState extends State<BillCalculatorPage> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(config.app.navigatorTitle),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: config.optionalString(
-              'theme_picker_tooltip',
-              'Theme appearance',
-            ),
-            icon: Icon(
-              switch (widget.themeMode) {
-                ThemeMode.dark => Icons.dark_mode_outlined,
-                ThemeMode.light => Icons.light_mode_outlined,
-                ThemeMode.system => Icons.brightness_auto_outlined,
-              },
-            ),
-            onPressed: () => _showThemeModeSheet(context),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Scrollbar(
-          controller: _scrollController,
-          thumbVisibility: _scrollbarInteractive,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            padding: EdgeInsets.all(layout.pagePadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+    return Scrollbar(
+      controller: _scrollController,
+      thumbVisibility: _scrollbarInteractive,
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        padding: EdgeInsets.all(widget.layoutPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
                 Text(
                   config.string('page_intro'),
                   style: textTheme.titleMedium?.copyWith(height: 1.35),
@@ -397,8 +269,6 @@ class _BillCalculatorPageState extends State<BillCalculatorPage> {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 }

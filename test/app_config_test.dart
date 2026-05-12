@@ -14,6 +14,8 @@ void main() {
       jsonDecode(c.encodeJson()) as Map<String, dynamic>,
     );
     expect(roundTrip.tariffSchedules['residential']!.length, 2);
+    expect(roundTrip.deviceGuide.items.first.title, 'Lamp');
+    expect(roundTrip.aboutDeveloper.developerName, 'Dev');
   });
 
   test('rejects invalid integerNumberPattern', () {
@@ -133,6 +135,9 @@ const String _sample = r'''
   "layout": {},
   "formatting": {},
   "strings": {
+    "nav_tab_calculate": "Calc",
+    "nav_tab_devices": "Devices",
+    "nav_tab_about": "About",
     "page_intro": "x",
     "meter_section_label": "m",
     "input_error": "e",
@@ -148,6 +153,18 @@ const String _sample = r'''
     "result_heading": "R",
     "breakdown_heading": "B",
     "footnote": "f"
+  },
+  "deviceGuide": {
+    "pageTitle": "Devices",
+    "intro": "Intro text for device guide.",
+    "items": [
+      { "title": "Lamp", "typicalWatts": 10, "notes": "LED" }
+    ]
+  },
+  "aboutDeveloper": {
+    "pageTitle": "About",
+    "developerName": "Dev",
+    "paragraphs": ["Hello."]
   },
   "meterOptions": [
     {
