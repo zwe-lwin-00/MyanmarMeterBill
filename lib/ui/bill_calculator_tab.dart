@@ -168,45 +168,46 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
                   onSubmitted: (_) => _calculate(),
                 ),
                 SizedBox(height: layout.afterInputGap),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final narrow = constraints.maxWidth < 420;
-                    final calc = FilledButton(
-                      onPressed: _calculate,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: layout.buttonVerticalPadding,
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: layout.buttonVerticalPadding,
+                          ),
                         ),
-                        child: Text(config.string('calculate_button')),
-                      ),
-                    );
-                    final clear = OutlinedButton(
-                      onPressed: _clear,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: layout.buttonVerticalPadding,
+                        onPressed: _calculate,
+                        child: Text(
+                          config.string('calculate_button'),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        child: Text(config.string('clear_button')),
                       ),
-                    );
-                    if (narrow) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          calc,
-                          SizedBox(height: layout.sectionGapSmall),
-                          clear,
-                        ],
-                      );
-                    }
-                    return Row(
-                      children: [
-                        Expanded(flex: 3, child: calc),
-                        SizedBox(width: layout.sectionGapMedium),
-                        Expanded(flex: 2, child: clear),
-                      ],
-                    );
-                  },
+                    ),
+                    SizedBox(width: layout.sectionGapSmall),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: layout.buttonVerticalPadding,
+                          ),
+                        ),
+                        onPressed: _clear,
+                        child: Text(
+                          config.string('clear_button'),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 if (_result == null) ...[
                   SizedBox(height: layout.resultTopGap),
@@ -285,81 +286,49 @@ class _MeterOptionCards extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final radii = BorderRadius.circular(16);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final narrowTwoCol =
-            options.length == 2 && constraints.maxWidth < 360;
+    if (options.length == 2) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: _MeterTile(
+              option: options[0],
+              groupValue: selectedId,
+              borderRadius: radii,
+              scheme: scheme,
+              compact: true,
+              onSelect: () => onChanged(options[0].id),
+            ),
+          ),
+          SizedBox(width: gap),
+          Expanded(
+            child: _MeterTile(
+              option: options[1],
+              groupValue: selectedId,
+              borderRadius: radii,
+              scheme: scheme,
+              compact: true,
+              onSelect: () => onChanged(options[1].id),
+            ),
+          ),
+        ],
+      );
+    }
 
-        if (options.length == 2 && !narrowTwoCol) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _MeterTile(
-                  option: options[0],
-                  groupValue: selectedId,
-                  borderRadius: radii,
-                  scheme: scheme,
-                  compact: true,
-                  onSelect: () => onChanged(options[0].id),
-                ),
-              ),
-              SizedBox(width: gap),
-              Expanded(
-                child: _MeterTile(
-                  option: options[1],
-                  groupValue: selectedId,
-                  borderRadius: radii,
-                  scheme: scheme,
-                  compact: true,
-                  onSelect: () => onChanged(options[1].id),
-                ),
-              ),
-            ],
-          );
-        }
-
-        if (options.length == 2 && narrowTwoCol) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _MeterTile(
-                option: options[0],
-                groupValue: selectedId,
-                borderRadius: radii,
-                scheme: scheme,
-                compact: false,
-                onSelect: () => onChanged(options[0].id),
-              ),
-              SizedBox(height: gap),
-              _MeterTile(
-                option: options[1],
-                groupValue: selectedId,
-                borderRadius: radii,
-                scheme: scheme,
-                compact: false,
-                onSelect: () => onChanged(options[1].id),
-              ),
-            ],
-          );
-        }
-
-        return Column(
-          children: [
-            for (var i = 0; i < options.length; i++) ...[
-              if (i > 0) SizedBox(height: gap),
-              _MeterTile(
-                option: options[i],
-                groupValue: selectedId,
-                borderRadius: radii,
-                scheme: scheme,
-                compact: false,
-                onSelect: () => onChanged(options[i].id),
-              ),
-            ],
-          ],
-        );
-      },
+    return Column(
+      children: [
+        for (var i = 0; i < options.length; i++) ...[
+          if (i > 0) SizedBox(height: gap),
+          _MeterTile(
+            option: options[i],
+            groupValue: selectedId,
+            borderRadius: radii,
+            scheme: scheme,
+            compact: false,
+            onSelect: () => onChanged(options[i].id),
+          ),
+        ],
+      ],
     );
   }
 }
