@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "app": {
+    "materialTitle": "Myanmar Meter Bill",
+    "navigatorTitle": "Myanmar Electric Bill",
+    "themeSeedColor": "#1E88E5",
+    "useMaterial3": true
+  },
+  "layout": {
+    "pagePadding": 20,
+    "sectionGapLarge": 16,
+    "sectionGapMedium": 8,
+    "sectionGapSmall": 8,
+    "afterInputGap": 20,
+    "resultTopGap": 28,
+    "footnoteTopGap": 16,
+    "buttonVerticalPadding": 14,
+    "breakdownRowVerticalPadding": 6,
+    "dividerHeight": 28
+  },
+  "formatting": {
+    "currencyDisplayPrefix": "Ks ",
+    "integerNumberPattern": "#,##0",
+    "breakdownLineTemplate": "{{units}} kWh × {{rate}} {{currencyPrefix}}",
+    "totalUnitsTemplate": "စုစုပေါင်း {{units}} kWh",
+    "totalAmountTemplate": "{{currencyPrefix}}{{amount}}"
+  },
+  "strings": {
+    "page_intro": "မီတာ အမျိုးအစား ရွေးပါ၊ သုံးထားသော ယူနစ် (kWh) ထည့်ပါ။",
+    "input_error": "ယူနစ် ပမာဏ ကို အောက်ပါ နေရာတွင် ထည့်ပါ။",
+    "units_label": "သုံးထားသော ယူနစ် (kWh)",
+    "units_hint": "ဥပမာ — 120",
+    "calculate_button": "တွက်ချက်မည်",
+    "result_heading": "ခန့်မှန်းငွေ",
+    "breakdown_heading": "အဆင့်အလိုက် ခွဲထုတ်ပြခြင်း",
+    "footnote": "မှတ်ချက် — ဤငွေသည် လုပ်ငန်းသီးခြား အခွန်များ၊ ပတ်စ်ကြေး စသဖြင့် ပေါင်းထည့်မှုမပါဝင်ပါ။ ရုံးသုံး နောက်ဆုံးနှုန်းကို MOEP သတင်းအချက်အလက်ဖြင့် စစ်ဆေးပါ။"
+  },
+  "meterOptions": [
+    {
+      "id": "home",
+      "segmentLabel": "အိမ်သုံး",
+      "detailLabel": "အိမ်သုံး (Residential)",
+      "tariffScheduleId": "residential"
+    },
+    {
+      "id": "business",
+      "segmentLabel": "လုပ်ငန်းသုံး",
+      "detailLabel": "လုပ်ငန်းသုံး (Commercial)",
+      "tariffScheduleId": "commercial"
+    }
+  ],
+  "tariffSchedules": {
+    "residential": [
+      { "capacityKwh": 50, "kyatsPerKwh": 50 },
+      { "capacityKwh": 50, "kyatsPerKwh": 100 },
+      { "capacityKwh": 100, "kyatsPerKwh": 150 },
+      { "capacityKwh": 1000000, "kyatsPerKwh": 300 }
+    ],
+    "commercial": [
+      { "capacityKwh": 500, "kyatsPerKwh": 125 },
+      { "capacityKwh": 4500, "kyatsPerKwh": 135 },
+      { "capacityKwh": 5000, "kyatsPerKwh": 145 },
+      { "capacityKwh": 10000, "kyatsPerKwh": 155 },
+      { "capacityKwh": 30000, "kyatsPerKwh": 165 },
+      { "capacityKwh": 50000, "kyatsPerKwh": 175 },
+      { "capacityKwh": 1000000, "kyatsPerKwh": 180 }
+    ]
+  }
+}
