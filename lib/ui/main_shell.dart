@@ -5,6 +5,7 @@ import '../config/app_config_scope.dart';
 import 'about_developer_tab.dart';
 import 'bill_calculator_tab.dart';
 import 'device_guide_tab.dart';
+import 'responsive_layout.dart';
 import 'theme_sheet.dart';
 
 /// Three-tab shell: calculator, device power guide, about developer.
@@ -29,10 +30,19 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final config = AppConfigScope.of(context);
     final layout = config.layout;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final navLabelBehavior = screenW < 380
+        ? NavigationDestinationLabelBehavior.onlyShowSelected
+        : NavigationDestinationLabelBehavior.alwaysShow;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: Text(_appBarTitle(config)),
+        title: Text(
+          _appBarTitle(config),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         centerTitle: true,
         actions: [
           IconButton(
@@ -56,17 +66,20 @@ class _MainShellState extends State<MainShell> {
         ],
       ),
       body: SafeArea(
-        child: IndexedStack(
-          index: _index,
-          sizing: StackFit.expand,
-          children: [
-            BillCalculatorTab(layoutPadding: layout.pagePadding),
-            DeviceGuideTab(layoutPadding: layout.pagePadding),
-            AboutDeveloperTab(layoutPadding: layout.pagePadding),
-          ],
+        child: ResponsiveContentPane(
+          child: IndexedStack(
+            index: _index,
+            sizing: StackFit.expand,
+            children: [
+              BillCalculatorTab(layoutPadding: layout.pagePadding),
+              DeviceGuideTab(layoutPadding: layout.pagePadding),
+              AboutDeveloperTab(layoutPadding: layout.pagePadding),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: NavigationBar(
+        labelBehavior: navLabelBehavior,
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: [

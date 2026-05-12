@@ -1,6 +1,5 @@
 import 'dart:ui' show FontFeature;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../calculator/electric_bill_calculator.dart';
 import '../config/app_config.dart';
 import '../config/app_config_scope.dart';
+import 'responsive_layout.dart';
 
 class BillCalculatorTab extends StatefulWidget {
   const BillCalculatorTab({
@@ -107,16 +107,6 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
     }
   }
 
-  bool get _scrollbarInteractive {
-    return switch (defaultTargetPlatform) {
-      TargetPlatform.windows ||
-      TargetPlatform.macOS ||
-      TargetPlatform.linux =>
-        true,
-      _ => false,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final config = AppConfigScope.of(context);
@@ -129,10 +119,10 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
 
     return Scrollbar(
       controller: _scrollController,
-      thumbVisibility: _scrollbarInteractive,
+      thumbVisibility: scrollbarThumbInteractive(),
       child: SingleChildScrollView(
         controller: _scrollController,
-        padding: EdgeInsets.all(widget.layoutPadding),
+        padding: responsiveScrollPadding(widget.layoutPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -180,7 +170,7 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
                 SizedBox(height: layout.afterInputGap),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final narrow = constraints.maxWidth < 400;
+                    final narrow = constraints.maxWidth < 420;
                     final calc = FilledButton(
                       onPressed: _calculate,
                       child: Padding(
@@ -295,49 +285,81 @@ class _MeterOptionCards extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final radii = BorderRadius.circular(16);
 
-    if (options.length == 2) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: _MeterTile(
-              option: options[0],
-              groupValue: selectedId,
-              borderRadius: radii,
-              scheme: scheme,
-              compact: true,
-              onSelect: () => onChanged(options[0].id),
-            ),
-          ),
-          SizedBox(width: gap),
-          Expanded(
-            child: _MeterTile(
-              option: options[1],
-              groupValue: selectedId,
-              borderRadius: radii,
-              scheme: scheme,
-              compact: true,
-              onSelect: () => onChanged(options[1].id),
-            ),
-          ),
-        ],
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrowTwoCol =
+            options.length == 2 && constraints.maxWidth < 360;
 
-    return Column(
-      children: [
-        for (var i = 0; i < options.length; i++) ...[
-          if (i > 0) SizedBox(height: gap),
-          _MeterTile(
-            option: options[i],
-            groupValue: selectedId,
-            borderRadius: radii,
-            scheme: scheme,
-            compact: false,
-            onSelect: () => onChanged(options[i].id),
-          ),
-        ],
-      ],
+        if (options.length == 2 && !narrowTwoCol) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _MeterTile(
+                  option: options[0],
+                  groupValue: selectedId,
+                  borderRadius: radii,
+                  scheme: scheme,
+                  compact: true,
+                  onSelect: () => onChanged(options[0].id),
+                ),
+              ),
+              SizedBox(width: gap),
+              Expanded(
+                child: _MeterTile(
+                  option: options[1],
+                  groupValue: selectedId,
+                  borderRadius: radii,
+                  scheme: scheme,
+                  compact: true,
+                  onSelect: () => onChanged(options[1].id),
+                ),
+              ),
+            ],
+          );
+        }
+
+        if (options.length == 2 && narrowTwoCol) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _MeterTile(
+                option: options[0],
+                groupValue: selectedId,
+                borderRadius: radii,
+                scheme: scheme,
+                compact: false,
+                onSelect: () => onChanged(options[0].id),
+              ),
+              SizedBox(height: gap),
+              _MeterTile(
+                option: options[1],
+                groupValue: selectedId,
+                borderRadius: radii,
+                scheme: scheme,
+                compact: false,
+                onSelect: () => onChanged(options[1].id),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            for (var i = 0; i < options.length; i++) ...[
+              if (i > 0) SizedBox(height: gap),
+              _MeterTile(
+                option: options[i],
+                groupValue: selectedId,
+                borderRadius: radii,
+                scheme: scheme,
+                compact: false,
+                onSelect: () => onChanged(options[i].id),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -527,12 +549,16 @@ class _ResultPanel extends StatelessWidget {
               header: true,
               liveRegion: true,
               label: '${config.string('result_heading')}: $totalStr',
-              child: Text(
-                totalStr,
-                style: textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: scheme.primary,
-                  fontFeatures: const [FontFeature.tabularFigures()],
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  totalStr,
+                  style: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: scheme.primary,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
               ),
             ),
@@ -604,11 +630,16 @@ class _ResultPanel extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        config.formatTotalAmount(
-                          kyatsFormat.format(row.subtotalKyats),
+                      Flexible(
+                        child: Text(
+                          config.formatTotalAmount(
+                            kyatsFormat.format(row.subtotalKyats),
+                          ),
+                          style: tabularStyle,
+                          textAlign: TextAlign.end,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        style: tabularStyle,
                       ),
                     ],
                   ),

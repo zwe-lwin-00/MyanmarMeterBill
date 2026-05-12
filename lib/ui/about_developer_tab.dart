@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config/app_config_scope.dart';
+import 'responsive_layout.dart';
 
 class AboutDeveloperTab extends StatelessWidget {
   const AboutDeveloperTab({super.key, required this.layoutPadding});
@@ -15,8 +16,9 @@ class AboutDeveloperTab extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scrollbar(
+      thumbVisibility: scrollbarThumbInteractive(),
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(layoutPadding),
+        padding: responsiveScrollPadding(layoutPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

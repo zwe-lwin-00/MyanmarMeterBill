@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config/app_config_scope.dart';
+import 'responsive_layout.dart';
 
 class DeviceGuideTab extends StatelessWidget {
   const DeviceGuideTab({super.key, required this.layoutPadding});
@@ -15,8 +16,9 @@ class DeviceGuideTab extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scrollbar(
+      thumbVisibility: scrollbarThumbInteractive(),
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(layoutPadding),
+        padding: responsiveScrollPadding(layoutPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -40,15 +42,15 @@ class DeviceGuideTab extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Expanded(
-                              child: Text(
-                                item.title,
-                                style: textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            Text(
+                              item.title,
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             if (item.typicalWatts != null)

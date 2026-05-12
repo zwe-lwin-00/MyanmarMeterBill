@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'config/app_config.dart';
@@ -89,6 +90,13 @@ class _MyanmarMeterBillAppState extends State<MyanmarMeterBillApp> {
       child: MaterialApp(
         title: app.materialTitle,
         debugShowCheckedModeBanner: false,
+        builder: (context, child) {
+          return MediaQuery.withClampedTextScaling(
+            minScaleFactor: 0.88,
+            maxScaleFactor: kIsWeb ? 1.2 : 1.34,
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
         themeMode: _themeMode,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
