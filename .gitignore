@@ -3,6 +3,7 @@
 *.log
 *.pyc
 *.swp
+*.swo
 .DS_Store
 .atom/
 .build/
@@ -27,11 +28,13 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
-/coverage/
+coverage/
 
 # Symbolication related
 app.*.symbols
@@ -43,3 +46,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local env / secrets (keep .env.example tracked if you use one)
+.env
+.env.*
+!.env.example
+
+# OS junk (Windows)
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Merge / patch leftovers
+*.orig
+*.rej
+
+# Flutter Version Management (https://fvm.app)
+.fvm/
