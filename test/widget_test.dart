@@ -74,6 +74,8 @@ const String _minimalTestConfigJson = r'''
     "result_heading": "Estimated",
     "breakdown_heading": "Breakdown",
     "footnote": "Test config.",
+    "maintenance_fee_checkbox": "Include maintenance fee",
+    "maintenance_fee_breakdown": "Maintenance fee",
     "theme_picker_title": "Appearance",
     "theme_picker_tooltip": "Theme",
     "theme_option_system": "System default",

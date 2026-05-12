@@ -152,7 +152,9 @@ const String _sample = r'''
     "tier_incomplete_warning": "t {{kwh}}",
     "result_heading": "R",
     "breakdown_heading": "B",
-    "footnote": "f"
+    "footnote": "f",
+    "maintenance_fee_checkbox": "Maint incl.",
+    "maintenance_fee_breakdown": "Maintenance"
   },
   "deviceGuide": {
     "pageTitle": "Devices",

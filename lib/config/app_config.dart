@@ -202,6 +202,7 @@ class MeterOption {
     required this.segmentLabel,
     required this.detailLabel,
     required this.tariffScheduleId,
+    this.maintenanceFeeKyats,
   });
 
   final String id;
@@ -209,14 +210,25 @@ class MeterOption {
   final String detailLabel;
   final String tariffScheduleId;
 
+  /// Optional fixed fee (e.g. residential ပြုပြင်ထိန်းသိမ်းခ), kyats.
+  final int? maintenanceFeeKyats;
+
   Map<String, Object?> toJson() => {
         'id': id,
         'segmentLabel': segmentLabel,
         'detailLabel': detailLabel,
         'tariffScheduleId': tariffScheduleId,
+        if (maintenanceFeeKyats != null) 'maintenanceFeeKyats': maintenanceFeeKyats,
       };
 
   static MeterOption fromJson(Map<String, dynamic> json) {
+    final feeRaw = json['maintenanceFeeKyats'] as num?;
+    final fee = feeRaw?.round();
+    if (fee != null && fee < 0) {
+      throw const FormatException(
+        'meterOptions.maintenanceFeeKyats must be non-negative',
+      );
+    }
     return MeterOption(
       id: json['id'] as String? ?? 'default',
       segmentLabel: json['segmentLabel'] as String? ?? json['id'] as String,
@@ -225,6 +237,7 @@ class MeterOption {
           '',
       tariffScheduleId:
           json['tariffScheduleId'] as String? ?? json['id'] as String,
+      maintenanceFeeKyats: (fee == null || fee == 0) ? null : fee,
     );
   }
 }

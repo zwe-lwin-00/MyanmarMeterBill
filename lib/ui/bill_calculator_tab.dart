@@ -31,6 +31,7 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
   String? _selectedMeterId;
   BillResult? _result;
   String? _inputError;
+  bool _includeMaintenance = false;
 
   @override
   void didChangeDependencies() {
@@ -66,7 +67,15 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
     setState(() {
       _result = null;
       _inputError = null;
+      _includeMaintenance = false;
     });
+  }
+
+  MeterOption? _meterOption(AppConfig config, String meterId) {
+    for (final o in config.meterOptions) {
+      if (o.id == meterId) return o;
+    }
+    return null;
   }
 
   void _calculate() {
@@ -114,6 +123,13 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
     final formatting = config.formatting;
     final kyatsFormat = NumberFormat(formatting.integerNumberPattern);
     final meterId = _selectedMeterId ?? config.meterOptions.first.id;
+    final selectedMeter = _meterOption(config, meterId);
+    final maintenanceFee = selectedMeter?.maintenanceFeeKyats;
+    final maintenanceApplied = maintenanceFee != null &&
+        maintenanceFee > 0 &&
+        _includeMaintenance;
+    final grandTotalKyats = (_result?.totalKyats ?? 0) +
+        (maintenanceApplied ? maintenanceFee! : 0);
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -147,9 +163,26 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
                     setState(() {
                       _selectedMeterId = id;
                       _result = null;
+                      _includeMaintenance = false;
                     });
                   },
                 ),
+                if (maintenanceFee != null && maintenanceFee > 0) ...[
+                  SizedBox(height: layout.sectionGapSmall),
+                  CheckboxListTile(
+                    value: _includeMaintenance,
+                    onChanged: (v) {
+                      setState(() => _includeMaintenance = v ?? false);
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text(
+                      config.string('maintenance_fee_checkbox'),
+                      style: textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
                 SizedBox(height: layout.sectionGapLarge + layout.sectionGapMedium),
                 TextField(
                   controller: _unitsController,
@@ -235,12 +268,15 @@ class _BillCalculatorTabState extends State<BillCalculatorTab> {
                     },
                     child: KeyedSubtree(
                       key: ValueKey(
-                        '${_result!.totalKyats}_${_result!.totalUnits}_${_result!.uncapturedKwh}_$meterId',
+                        '${_result!.totalKyats}_${_result!.totalUnits}_${_result!.uncapturedKwh}_${meterId}_${_includeMaintenance}_${maintenanceFee ?? 0}',
                       ),
                       child: _ResultPanel(
                         resultKey: _resultKey,
                         config: config,
                         result: _result!,
+                        grandTotalKyats: grandTotalKyats,
+                        maintenanceBreakdownKyats:
+                            maintenanceApplied ? maintenanceFee : null,
                         layout: layout,
                         kyatsFormat: kyatsFormat,
                         tabularStyle: _tabularAmountStyle(context),
@@ -457,6 +493,8 @@ class _ResultPanel extends StatelessWidget {
     required this.resultKey,
     required this.config,
     required this.result,
+    required this.grandTotalKyats,
+    required this.maintenanceBreakdownKyats,
     required this.layout,
     required this.kyatsFormat,
     required this.tabularStyle,
@@ -466,6 +504,8 @@ class _ResultPanel extends StatelessWidget {
   final GlobalKey resultKey;
   final AppConfig config;
   final BillResult result;
+  final int grandTotalKyats;
+  final int? maintenanceBreakdownKyats;
   final LayoutSection layout;
   final NumberFormat kyatsFormat;
   final TextStyle tabularStyle;
@@ -476,7 +516,7 @@ class _ResultPanel extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final totalStr = config.formatTotalAmount(
-      kyatsFormat.format(result.totalKyats),
+      kyatsFormat.format(grandTotalKyats),
     );
 
     return Card(
@@ -615,6 +655,36 @@ class _ResultPanel extends StatelessWidget {
                 ),
               ),
             ),
+            if (maintenanceBreakdownKyats != null &&
+                maintenanceBreakdownKyats! > 0)
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  vertical: layout.breakdownRowVerticalPadding,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        config.string('maintenance_fee_breakdown'),
+                        style: textTheme.bodyMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Text(
+                        config.formatTotalAmount(
+                          kyatsFormat.format(maintenanceBreakdownKyats!),
+                        ),
+                        style: tabularStyle,
+                        textAlign: TextAlign.end,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

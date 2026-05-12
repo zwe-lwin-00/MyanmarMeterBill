@@ -19,4 +19,6 @@ const Set<String> kRequiredUiStringKeys = {
   'result_heading',
   'breakdown_heading',
   'footnote',
+  'maintenance_fee_checkbox',
+  'maintenance_fee_breakdown',
 };
