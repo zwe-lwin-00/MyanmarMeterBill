@@ -55,15 +55,39 @@ VS Code / Cursor: use **Run and Debug** and select **Myanmar Meter Bill (web-ser
 flutter run --dart-define=APP_CONFIG_ASSET=assets/config/your_file.json
 ```
 
-The JSON includes: `schemaVersion`, `app` (titles, theme seed color, Material 3 flag), `layout`, `formatting` (currency prefix, number pattern, line templates with `{{placeholders}}`), `strings` (UI keys), `meterOptions` (id, labels, `tariffScheduleId`), and `tariffSchedules` (named lists of `{ "capacityKwh", "kyatsPerKwh" }` tiers). Each meter option’s `tariffScheduleId` must exist in `tariffSchedules`.
+The JSON includes: `schemaVersion`, `app`, `layout`, `formatting`, `strings`, `meterOptions`, and `tariffSchedules`. Invalid configs fail at load with **`FormatException`** (clear message) instead of failing later in the UI.
+
+### Configuration contract (strict)
+
+Authoritative **required `strings` keys** are defined in **`lib/config/required_config_keys.dart`** (`kRequiredUiStringKeys`). Every key must exist and be **non-empty** after trim.
+
+**`app`:** `materialTitle` and `navigatorTitle` must be non-empty after trim. **`themeSeedColor`** is a `#RRGGBB` or `#AARRGGBB` hex string. **`themeMode`:** `light`, `dark`, or `system` — used as the **first-launch default** until the user picks a theme in the app; the choice is then stored on the device (**`shared_preferences`**) and overrides JSON on later launches.
+
+**Optional `strings` (theme picker):** `theme_picker_title`, `theme_picker_tooltip`, `theme_option_system`, `theme_option_light`, `theme_option_dark` — if missing or empty, English fallbacks are used (`AppConfig.optionalString`).
+
+**`formatting`:** `currencyDisplayPrefix` must be non-empty. **`integerNumberPattern`** must be valid for `intl`’s `NumberFormat`. Templates must include these placeholders and render without leftover `{{` after substitution:
+
+| Field | Required placeholders |
+|--------|-------------------------|
+| `breakdownLineTemplate` | `{{units}}`, `{{rate}}`, `{{currencyPrefix}}` |
+| `totalUnitsTemplate` | `{{units}}` |
+| `totalAmountTemplate` | `{{currencyPrefix}}`, `{{amount}}` |
+
+**`layout`:** all numeric fields must be **finite** and **≥ 0**.
+
+**`meterOptions`:** each **`id`** unique, non-empty; **`tariffScheduleId`** non-empty and must match a `tariffSchedules` key.
+
+**`tariffSchedules`:** schedule id keys must be non-empty; each tier has **positive** `capacityKwh` and **non-negative** `kyatsPerKwh`.
+
+**`schemaVersion`:** must be the integer **1** (JSON may encode it as `1.0`).
 
 ## Project layout
 
 ```
 lib/
   main.dart                 # Entry: loads config, error shell if asset fails
-  config/                   # AppConfig model, loader, InheritedWidget scope
-  calculator/               # Tiered bill math
+  config/                   # AppConfig, loader, scope, required_config_keys.dart
+  theme/                    # user_theme_mode_storage (saved light/dark/system)
   models/                   # e.g. TariffTier
   ui/                       # Bill calculator screen
 assets/config/              # JSON configuration(s)
@@ -80,4 +104,4 @@ flutter test
 
 - **Estimate only:** no standing charges, VAT, rounding rules, or promotional schemes unless you model them in config and code.
 - **Simplified categories:** defaults map to residential-style vs commercial-style schedules; real billing may use more meter classes or regional schedules.
-- **Web:** if `flutter run -d chrome` fails to start the browser on your machine, use **`-d web-server`** and open the URL shown in the terminal.
+- **Tier coverage:** if configured tiers do not cover all kWh, the app shows a warning and still shows partial math; extend the last tier capacity in JSON for full coverage.

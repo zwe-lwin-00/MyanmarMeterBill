@@ -15,6 +15,109 @@ void main() {
     );
     expect(roundTrip.tariffSchedules['residential']!.length, 2);
   });
+
+  test('rejects invalid integerNumberPattern', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    j['formatting'] = {'integerNumberPattern': '%%%INVALID%%%'};
+    expect(() => AppConfig.fromJson(j), throwsA(isA<FormatException>()));
+  });
+
+  test('rejects duplicate meter ids', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    j['meterOptions'] = [
+      {
+        'id': 'home',
+        'segmentLabel': 'A',
+        'detailLabel': 'A',
+        'tariffScheduleId': 'residential',
+      },
+      {
+        'id': 'home',
+        'segmentLabel': 'B',
+        'detailLabel': 'B',
+        'tariffScheduleId': 'residential',
+      },
+    ];
+    expect(() => AppConfig.fromJson(j), throwsA(isA<FormatException>()));
+  });
+
+  test('rejects non-positive capacityKwh', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    j['tariffSchedules'] = {
+      'residential': [
+        {'capacityKwh': 0, 'kyatsPerKwh': 50},
+      ],
+    };
+    expect(() => AppConfig.fromJson(j), throwsA(isA<FormatException>()));
+  });
+
+  test('accepts schemaVersion as JSON number (e.g. 1.0)', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    j['schemaVersion'] = 1.0;
+    final c = AppConfig.fromJson(j);
+    expect(c.schemaVersion, 1);
+  });
+
+  test('rejects strings missing a required key', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    final s = Map<String, dynamic>.from(
+      (j['strings'] as Map).cast<String, dynamic>(),
+    )..remove('footnote');
+    j['strings'] = s;
+    expect(() => AppConfig.fromJson(j), throwsA(isA<FormatException>()));
+  });
+
+  test('rejects totalUnitsTemplate without units placeholder', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    j['formatting'] = {
+      'integerNumberPattern': '#,##0',
+      'breakdownLineTemplate':
+          '{{units}} kWh × {{rate}} {{currencyPrefix}}',
+      'totalUnitsTemplate': 'no placeholder here',
+      'totalAmountTemplate': '{{currencyPrefix}}{{amount}}',
+    };
+    expect(() => AppConfig.fromJson(j), throwsA(isA<FormatException>()));
+  });
+
+  test('rejects negative layout padding', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    j['layout'] = {'pagePadding': -1};
+    expect(() => AppConfig.fromJson(j), throwsA(isA<FormatException>()));
+  });
+
+  test('rejects empty tariff schedule id key', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    j['tariffSchedules'] = {
+      '': [
+        {'capacityKwh': 10, 'kyatsPerKwh': 1},
+      ],
+    };
+    expect(() => AppConfig.fromJson(j), throwsA(isA<FormatException>()));
+  });
+
+  test('rejects empty app.materialTitle', () {
+    final j = Map<String, dynamic>.from(
+      jsonDecode(_sample) as Map<String, dynamic>,
+    );
+    (j['app'] as Map<String, dynamic>)['materialTitle'] = '   ';
+    expect(() => AppConfig.fromJson(j), throwsA(isA<FormatException>()));
+  });
 }
 
 const String _sample = r'''
@@ -24,11 +127,28 @@ const String _sample = r'''
     "materialTitle": "T",
     "navigatorTitle": "T",
     "themeSeedColor": "#000000",
-    "useMaterial3": true
+    "useMaterial3": true,
+    "themeMode": "light"
   },
   "layout": {},
   "formatting": {},
-  "strings": { "page_intro": "x" },
+  "strings": {
+    "page_intro": "x",
+    "meter_section_label": "m",
+    "input_error": "e",
+    "input_error_zero": "z",
+    "units_label": "u",
+    "units_hint": "h",
+    "units_helper": "p",
+    "calculate_button": "c",
+    "clear_button": "l",
+    "result_empty_hint": "r",
+    "estimate_chip": "i",
+    "tier_incomplete_warning": "t {{kwh}}",
+    "result_heading": "R",
+    "breakdown_heading": "B",
+    "footnote": "f"
+  },
   "meterOptions": [
     {
       "id": "home",

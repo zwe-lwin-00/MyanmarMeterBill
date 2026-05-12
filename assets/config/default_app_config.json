@@ -4,7 +4,8 @@
     "materialTitle": "Myanmar Meter Bill",
     "navigatorTitle": "Myanmar Electric Bill",
     "themeSeedColor": "#1E88E5",
-    "useMaterial3": true
+    "useMaterial3": true,
+    "themeMode": "system"
   },
   "layout": {
     "pagePadding": 20,
@@ -27,13 +28,25 @@
   },
   "strings": {
     "page_intro": "မီတာ အမျိုးအစား ရွေးပါ၊ သုံးထားသော ယူနစ် (kWh) ထည့်ပါ။",
+    "meter_section_label": "မီတာ အမျိုးအစား",
     "input_error": "ယူနစ် ပမာဏ ကို အောက်ပါ နေရာတွင် ထည့်ပါ။",
+    "input_error_zero": "သုံးစွဲမှု ၀ ထက်ကြီး ဖြစ်သော ယူနစ် ကို ထည့်ပါ။",
     "units_label": "သုံးထားသော ယူနစ် (kWh)",
     "units_hint": "ဥပမာ — 120",
+    "units_helper": "ဘောင်ချာပေါ်ရှိ ကာလအတွင်း သုံးစွဲမှု (kWh) ကို ထည့်ပါ။",
     "calculate_button": "တွက်ချက်မည်",
+    "clear_button": "ရှင်းလင်းမည်",
+    "result_empty_hint": "ယူနစ် ထည့်ပြီး တွက်ချက်မည် ကို နှိပ်ပါ။ ခန့်မှန်းငွေကို ဤနေရာတွင် ပြပါမည်။",
+    "estimate_chip": "ခန့်မှန်းငွေသာ",
+    "tier_incomplete_warning": "သတ်မှတ်ထားသော နှုန်းအဆင့်အားလုံး သုံးပြီးနောက် {{kwh}} kWh ကျန်နေသေးသည်။ ကွန်ဖစ်ကို ပြင်ဆင်ပါ သို့မဟုတ် တရားဝင်နှုန်းများနှင့် ကိုက်ညီစေပါ။",
     "result_heading": "ခန့်မှန်းငွေ",
     "breakdown_heading": "အဆင့်အလိုက် ခွဲထုတ်ပြခြင်း",
-    "footnote": "မှတ်ချက် — ဤငွေသည် လုပ်ငန်းသီးခြား အခွန်များ၊ ပတ်စ်ကြေး စသဖြင့် ပေါင်းထည့်မှုမပါဝင်ပါ။ ရုံးသုံး နောက်ဆုံးနှုန်းကို MOEP သတင်းအချက်အလက်ဖြင့် စစ်ဆေးပါ။"
+    "footnote": "မှတ်ချက် — ဤငွေသည် လုပ်ငန်းသီးခြား အခွန်များ၊ ပတ်စ်ကြေး စသဖြင့် ပေါင်းထည့်မှုမပါဝင်ပါ။ ရုံးသုံး နောက်ဆုံးနှုန်းကို MOEP သတင်းအချက်အလက်ဖြင့် စစ်ဆေးပါ။",
+    "theme_picker_title": "အပြင်အဆင် ပုံစံ",
+    "theme_picker_tooltip": "အလင်း / အမှောင် / စနစ်အတိုင်း ရွေးပါ",
+    "theme_option_system": "စနစ်အတိုင်း",
+    "theme_option_light": "အလင်း",
+    "theme_option_dark": "အမှောင်"
   },
   "meterOptions": [
     {

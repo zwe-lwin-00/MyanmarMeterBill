@@ -17,11 +17,15 @@ class BillResult {
     required this.totalUnits,
     required this.totalKyats,
     required this.breakdown,
+    this.uncapturedKwh = 0,
   });
 
   final int totalUnits;
   final int totalKyats;
   final List<TierBreakdown> breakdown;
+
+  /// kWh not covered by [tiers] (tiers exhausted before all units were priced).
+  final int uncapturedKwh;
 }
 
 /// Applies Myanmar-style **incremental** block tariffs: each tier’s rate applies only
@@ -31,7 +35,31 @@ class ElectricBillCalculator {
 
   BillResult calculate(int unitsKwh, List<TariffTier> tiers) {
     if (unitsKwh <= 0) {
-      return BillResult(totalUnits: unitsKwh, totalKyats: 0, breakdown: []);
+      return BillResult(
+        totalUnits: unitsKwh,
+        totalKyats: 0,
+        breakdown: [],
+        uncapturedKwh: 0,
+      );
+    }
+    if (tiers.isEmpty) {
+      throw ArgumentError.value(tiers, 'tiers', 'must not be empty');
+    }
+    for (final t in tiers) {
+      if (t.capacityKwh <= 0) {
+        throw ArgumentError.value(
+          t.capacityKwh,
+          'tier.capacityKwh',
+          'must be positive',
+        );
+      }
+      if (t.kyatsPerKwh < 0) {
+        throw ArgumentError.value(
+          t.kyatsPerKwh,
+          'tier.kyatsPerKwh',
+          'must be non-negative',
+        );
+      }
     }
 
     var remaining = unitsKwh;
@@ -53,12 +81,11 @@ class ElectricBillCalculator {
       remaining -= take;
     }
 
-    // If tiers don’t cover huge consumption, remaining units would need another tier.
-    // Last tier uses a large capacity; any overflow is ignored until tiers are updated.
     return BillResult(
       totalUnits: unitsKwh,
       totalKyats: total,
       breakdown: breakdown,
+      uncapturedKwh: remaining,
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'config/app_config.dart';
 import 'config/app_config_loader.dart';
 import 'config/app_config_scope.dart';
+import 'theme/user_theme_mode_storage.dart';
 import 'ui/bill_calculator_page.dart';
 
 Future<void> main() async {
@@ -48,19 +49,47 @@ class _BootstrapApp extends StatelessWidget {
   }
 }
 
-class MyanmarMeterBillApp extends StatelessWidget {
+class MyanmarMeterBillApp extends StatefulWidget {
   const MyanmarMeterBillApp({super.key, required this.config});
 
   final AppConfig config;
 
   @override
+  State<MyanmarMeterBillApp> createState() => _MyanmarMeterBillAppState();
+}
+
+class _MyanmarMeterBillAppState extends State<MyanmarMeterBillApp> {
+  late ThemeMode _themeMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _themeMode = widget.config.app.materialThemeMode;
+    _restoreUserTheme();
+  }
+
+  Future<void> _restoreUserTheme() async {
+    final saved = await UserThemeModeStorage.load();
+    if (!mounted) return;
+    if (saved != null) {
+      setState(() => _themeMode = saved);
+    }
+  }
+
+  Future<void> _onUserThemeModeChanged(ThemeMode mode) async {
+    setState(() => _themeMode = mode);
+    await UserThemeModeStorage.save(mode);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final app = config.app;
+    final app = widget.config.app;
     return AppConfigScope(
-      config: config,
+      config: widget.config,
       child: MaterialApp(
         title: app.materialTitle,
         debugShowCheckedModeBanner: false,
+        themeMode: _themeMode,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: app.themeSeedColor,
@@ -68,7 +97,17 @@ class MyanmarMeterBillApp extends StatelessWidget {
           ),
           useMaterial3: app.useMaterial3,
         ),
-        home: const BillCalculatorPage(),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: app.themeSeedColor,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: app.useMaterial3,
+        ),
+        home: BillCalculatorPage(
+          themeMode: _themeMode,
+          onThemeModeChanged: _onUserThemeModeChanged,
+        ),
       ),
     );
   }

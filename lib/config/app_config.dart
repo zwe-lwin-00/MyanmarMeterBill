@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../models/tariff_tier.dart';
+import 'required_config_keys.dart';
 import 'string_template.dart';
 
 class AppSection {
@@ -11,6 +13,7 @@ class AppSection {
     required this.navigatorTitle,
     required this.themeSeedColor,
     required this.useMaterial3,
+    required this.themeMode,
   });
 
   final String materialTitle;
@@ -18,22 +21,44 @@ class AppSection {
   final Color themeSeedColor;
   final bool useMaterial3;
 
+  /// `light`, `dark`, or `system` (case-insensitive).
+  final String themeMode;
+
   Map<String, Object?> toJson() => {
         'materialTitle': materialTitle,
         'navigatorTitle': navigatorTitle,
         'themeSeedColor': _colorToHex(themeSeedColor),
         'useMaterial3': useMaterial3,
+        'themeMode': themeMode,
       };
 
   static AppSection fromJson(Map<String, dynamic> json) {
     final hex = json['themeSeedColor'] as String? ?? '#1E88E5';
+    final materialTitle = (json['materialTitle'] as String? ?? '').trim();
+    final navigatorTitle = (json['navigatorTitle'] as String? ?? '').trim();
+    if (materialTitle.isEmpty) {
+      throw const FormatException('app.materialTitle must not be empty');
+    }
+    if (navigatorTitle.isEmpty) {
+      throw const FormatException('app.navigatorTitle must not be empty');
+    }
+    final mode = (json['themeMode'] as String? ?? 'system').toLowerCase();
     return AppSection(
-      materialTitle: json['materialTitle'] as String? ?? 'App',
-      navigatorTitle: json['navigatorTitle'] as String? ?? 'App',
+      materialTitle: materialTitle,
+      navigatorTitle: navigatorTitle,
       themeSeedColor: _parseHexColor(hex),
       useMaterial3: json['useMaterial3'] as bool? ?? true,
+      themeMode: mode == 'dark' || mode == 'light' || mode == 'system'
+          ? mode
+          : 'system',
     );
   }
+
+  ThemeMode get materialThemeMode => switch (themeMode) {
+        'dark' => ThemeMode.dark,
+        'light' => ThemeMode.light,
+        _ => ThemeMode.system,
+      };
 }
 
 class LayoutSection {
@@ -130,12 +155,17 @@ class FormattingSection {
       };
 
   static FormattingSection fromJson(Map<String, dynamic>? json) {
-    if (json == null) return FormattingSection.defaults();
+    if (json == null) {
+      final d = FormattingSection.defaults();
+      _validateNumberPattern(d.integerNumberPattern);
+      return d;
+    }
+    final pattern = json['integerNumberPattern'] as String? ?? '#,##0';
+    _validateNumberPattern(pattern);
     return FormattingSection(
       currencyDisplayPrefix:
           json['currencyDisplayPrefix'] as String? ?? 'Ks ',
-      integerNumberPattern:
-          json['integerNumberPattern'] as String? ?? '#,##0',
+      integerNumberPattern: pattern,
       breakdownLineTemplate: json['breakdownLineTemplate'] as String? ??
           '{{units}} kWh × {{rate}} {{currencyPrefix}}',
       totalUnitsTemplate: json['totalUnitsTemplate'] as String? ??
@@ -143,6 +173,16 @@ class FormattingSection {
       totalAmountTemplate: json['totalAmountTemplate'] as String? ??
           '{{currencyPrefix}}{{amount}}',
     );
+  }
+
+  static void _validateNumberPattern(String pattern) {
+    try {
+      NumberFormat(pattern).format(1234567);
+    } catch (e) {
+      throw FormatException(
+        'Invalid integerNumberPattern "$pattern": $e',
+      );
+    }
   }
 
   static FormattingSection defaults() => const FormattingSection(
@@ -209,6 +249,18 @@ class AppConfig {
   final Map<String, List<TariffTier>> tariffSchedules;
 
   String string(String key) => strings[key] ?? key;
+
+  /// Optional UI copy: uses [strings] when non-empty, else [fallback].
+  /// Not validated by [kRequiredUiStringKeys] (e.g. theme picker labels).
+  String optionalString(String key, String fallback) {
+    final v = strings[key];
+    if (v == null || v.trim().isEmpty) return fallback;
+    return v;
+  }
+
+  /// Replaces `{{name}}` placeholders in a [strings] value.
+  String fillString(String key, Map<String, String> vars) =>
+      applyTemplate(string(key), vars);
 
   String formatTotalAmount(String formattedAmount) {
     return applyTemplate(formatting.totalAmountTemplate, {
@@ -280,7 +332,7 @@ class AppConfig {
       const JsonEncoder.withIndent('  ').convert(toJson());
 
   static AppConfig fromJson(Map<String, dynamic> json) {
-    final version = json['schemaVersion'] as int? ?? 1;
+    final version = _readSchemaVersion(json['schemaVersion']);
     if (version != 1) {
       throw FormatException('Unsupported schemaVersion: $version');
     }
@@ -298,10 +350,30 @@ class AppConfig {
       throw const FormatException('meterOptions must not be empty');
     }
 
+    final seenMeterIds = <String>{};
+    for (final m in meters) {
+      if (m.id.trim().isEmpty) {
+        throw const FormatException('meterOptions id must not be empty');
+      }
+      if (!seenMeterIds.add(m.id)) {
+        throw FormatException('Duplicate meter id: ${m.id}');
+      }
+      if (m.tariffScheduleId.trim().isEmpty) {
+        throw FormatException(
+          'meterOptions.tariffScheduleId must not be empty (meter id: ${m.id})',
+        );
+      }
+    }
+
     final scheduleJson =
         json['tariffSchedules'] as Map<String, dynamic>? ?? {};
     final schedules = <String, List<TariffTier>>{};
     for (final e in scheduleJson.entries) {
+      if (e.key.trim().isEmpty) {
+        throw const FormatException(
+          'tariffSchedules must not use an empty schedule id',
+        );
+      }
       final list = e.value as List<dynamic>?;
       if (list == null || list.isEmpty) {
         throw FormatException('Empty tariff schedule: ${e.key}');
@@ -313,9 +385,21 @@ class AppConfig {
         if (cap == null || rate == null) {
           throw FormatException('Invalid tier in schedule ${e.key}');
         }
+        final capR = cap.round();
+        final rateR = rate.round();
+        if (capR <= 0) {
+          throw FormatException(
+            'capacityKwh must be positive in schedule ${e.key}',
+          );
+        }
+        if (rateR < 0) {
+          throw FormatException(
+            'kyatsPerKwh must be non-negative in schedule ${e.key}',
+          );
+        }
         return TariffTier(
-          capacityKwh: cap.round(),
-          kyatsPerKwh: rate.round(),
+          capacityKwh: capR,
+          kyatsPerKwh: rateR,
         );
       }).toList();
     }
@@ -333,13 +417,21 @@ class AppConfig {
       (k, v) => MapEntry(k, v?.toString() ?? ''),
     );
 
+    final layout = LayoutSection.fromJson(json['layout'] as Map<String, dynamic>?);
+    final formatting = FormattingSection.fromJson(
+      json['formatting'] as Map<String, dynamic>?,
+    );
+    final app = AppSection.fromJson(appMap);
+
+    _validateLayout(layout);
+    _validateFormattingTemplates(formatting);
+    _validateUiStrings(strings);
+
     return AppConfig(
       schemaVersion: version,
-      app: AppSection.fromJson(appMap),
-      layout: LayoutSection.fromJson(json['layout'] as Map<String, dynamic>?),
-      formatting: FormattingSection.fromJson(
-        json['formatting'] as Map<String, dynamic>?,
-      ),
+      app: app,
+      layout: layout,
+      formatting: formatting,
       strings: strings,
       meterOptions: meters,
       tariffSchedules: schedules,
@@ -352,6 +444,109 @@ class AppConfig {
       throw const FormatException('Root JSON must be an object');
     }
     return AppConfig.fromJson(decoded);
+  }
+}
+
+int _readSchemaVersion(Object? value) {
+  if (value == null) return 1;
+  if (value is int) return value;
+  if (value is num) return value.round();
+  throw FormatException('schemaVersion must be a number, got: $value');
+}
+
+void _validateUiStrings(Map<String, String> strings) {
+  for (final key in kRequiredUiStringKeys) {
+    final v = strings[key];
+    if (v == null || v.trim().isEmpty) {
+      throw FormatException(
+        'strings["$key"] is required and must be non-empty '
+        '(see lib/config/required_config_keys.dart)',
+      );
+    }
+  }
+}
+
+void _validateLayout(LayoutSection l) {
+  void check(String name, double v) {
+    if (!v.isFinite || v < 0) {
+      throw FormatException(
+        'layout.$name must be a non-negative finite number, got $v',
+      );
+    }
+  }
+
+  check('pagePadding', l.pagePadding);
+  check('sectionGapLarge', l.sectionGapLarge);
+  check('sectionGapMedium', l.sectionGapMedium);
+  check('sectionGapSmall', l.sectionGapSmall);
+  check('afterInputGap', l.afterInputGap);
+  check('resultTopGap', l.resultTopGap);
+  check('footnoteTopGap', l.footnoteTopGap);
+  check('buttonVerticalPadding', l.buttonVerticalPadding);
+  check('breakdownRowVerticalPadding', l.breakdownRowVerticalPadding);
+  check('dividerHeight', l.dividerHeight);
+}
+
+void _validateFormattingTemplates(FormattingSection f) {
+  if (f.currencyDisplayPrefix.trim().isEmpty) {
+    throw const FormatException(
+      'formatting.currencyDisplayPrefix must not be empty',
+    );
+  }
+
+  _requireTemplatePlaceholders(
+    f.breakdownLineTemplate,
+    'breakdownLineTemplate',
+    const {'units', 'rate', 'currencyPrefix'},
+  );
+  _requireTemplatePlaceholders(
+    f.totalUnitsTemplate,
+    'totalUnitsTemplate',
+    const {'units'},
+  );
+  _requireTemplatePlaceholders(
+    f.totalAmountTemplate,
+    'totalAmountTemplate',
+    const {'currencyPrefix', 'amount'},
+  );
+
+  final br = applyTemplate(f.breakdownLineTemplate, {
+    'units': '9',
+    'rate': '99',
+    'currencyPrefix': f.currencyDisplayPrefix,
+  });
+  _assertNoPlaceholderSyntax(br, 'breakdownLineTemplate');
+
+  final tu = applyTemplate(f.totalUnitsTemplate, {'units': '9'});
+  _assertNoPlaceholderSyntax(tu, 'totalUnitsTemplate');
+
+  final ta = applyTemplate(f.totalAmountTemplate, {
+    'currencyPrefix': f.currencyDisplayPrefix,
+    'amount': '999',
+  });
+  _assertNoPlaceholderSyntax(ta, 'totalAmountTemplate');
+}
+
+void _requireTemplatePlaceholders(
+  String template,
+  String fieldName,
+  Set<String> keys,
+) {
+  for (final k in keys) {
+    if (!template.contains('{{$k}}')) {
+      throw FormatException(
+        'formatting.$fieldName must contain placeholder {{$k}}',
+      );
+    }
+  }
+}
+
+void _assertNoPlaceholderSyntax(String rendered, String fieldName) {
+  if (rendered.contains('{{')) {
+    throw FormatException(
+      'formatting.$fieldName still contains "{{" after substitution — '
+      'check placeholder names match those in required_config_keys / README',
+    );
   }
 }
 
@@ -370,10 +565,10 @@ Color _parseHexColor(String input) {
 }
 
 String _colorToHex(Color c) {
-  final v = c.value;
-  final r = (v >> 16) & 0xff;
-  final g = (v >> 8) & 0xff;
-  final b = v & 0xff;
+  int byte(double channel) => (channel * 255.0).round().clamp(0, 255);
+  final r = byte(c.r);
+  final g = byte(c.g);
+  final b = byte(c.b);
   return '#${r.toRadixString(16).padLeft(2, '0')}'
       '${g.toRadixString(16).padLeft(2, '0')}'
       '${b.toRadixString(16).padLeft(2, '0')}';
